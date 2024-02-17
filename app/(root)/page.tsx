@@ -7,55 +7,61 @@ import Pagination from "@/components/shared/Pagination";
 import { fetchPosts } from "@/lib/actions/thread.actions";
 import { fetchUser } from "@/lib/actions/user.actions";
 
-async function Home({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | undefined };
-}) {
-  const user = await currentUser();
-  if (!user) return null;
+async function Home({searchParams,}: {searchParams: { [key: string]: string | undefined }}) {
+    const user = await currentUser();
 
-  const userInfo = await fetchUser(user.id);
-  if (!userInfo?.onboarded) redirect("/onboarding");
+    //descomentar estas tres lineas para que los usuarios inicien sesion o se registren primero antes de ver el contenido del sitio
+    /*if (!user) return null; 
+    const userInfo = await fetchUser(user.id);
+    if (!userInfo?.onboarded) redirect("/onboarding");*/
 
-  const result = await fetchPosts(
-    searchParams.page ? +searchParams.page : 1,
-    30
-  );
+    //codigo para ver los post sin iniciar sesion previamente, 
+    if (user) {
+        const userInfo = await fetchUser(user.id);
+        if (!userInfo?.onboarded) redirect("/onboarding");
+    }
 
-  return (
-    <>
-      <h1 className='head-text text-left'>Home</h1>
+    //linea de codigo para reemplazar para ocultar los post sin iniciar sesion
+    //currentUserId={user.id}
 
-      <section className='mt-9 flex flex-col gap-10'>
-        {result.posts.length === 0 ? (
-          <p className='no-result'>No threads found</p>
-        ) : (
-          <>
-            {result.posts.map((post) => (
-              <ThreadCard
-                key={post._id}
-                id={post._id}
-                currentUserId={user.id}
-                parentId={post.parentId}
-                content={post.text}
-                author={post.author}
-                community={post.community}
-                createdAt={post.createdAt}
-                comments={post.children}
-              />
-            ))}
-          </>
-        )}
-      </section>
+    const result = await fetchPosts(
+        searchParams.page ? +searchParams.page : 1,
+        30
+    );
 
-      <Pagination
-        path='/'
-        pageNumber={searchParams?.page ? +searchParams.page : 1}
-        isNext={result.isNext}
-      />
-    </>
-  );
+    return (
+        <>
+            <h1 className='head-text text-left'>Home</h1>
+
+            <section className='mt-9 flex flex-col gap-10'>
+                {result.posts.length === 0 ? (
+                    <p className='no-result'>No threads found</p>
+                ) : (
+                    <>
+                        {result.posts.map((post) => (
+                            <ThreadCard
+                                key={post._id}
+                                id={post._id}
+                                currentUserId={user ? user.id : ''}
+                                parentId={post.parentId}
+                                content={post.text}
+                                author={post.author}
+                                community={post.community}
+                                createdAt={post.createdAt}
+                                comments={post.children}
+                            />
+                        ))}
+                    </>
+                )}
+            </section>
+
+            <Pagination
+                path='/'
+                pageNumber={searchParams?.page ? +searchParams.page : 1}
+                isNext={result.isNext}
+            />
+        </>
+    );
 }
 
 export default Home;
